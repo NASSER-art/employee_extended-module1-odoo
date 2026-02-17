@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Contract Form View -->
+    <record id="hr_contract_view_form_extended" model="ir.ui.view">
+        <field name="name">hr.contract.form.extended</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Détails Tunisie" name="tunisia_details">
+                    <group>
+                        <group string="Type de contrat">
+                            <field name="contract_type_extended"/>
+                            <field name="cdd_reason" attrs="{'invisible': [('contract_type_extended', '!=', 'cdd')], 'required': [('contract_type_extended', '=', 'cdd')]}"/>
+                        </group>
+                        <group string="Période d'essai (CDI)" attrs="{'invisible': [('contract_type_extended', '!=', 'cdi')]}">
+                            <field name="is_trial_period"/>
+                            <field name="trial_date_start" attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                            <field name="trial_date_end" attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                            <field name="trial_renewed" attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                            <field name="trial_status" attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                            <button name="action_renew_trial" string="Renouveler l'essai" type="object" class="btn-primary" attrs="{'invisible': ['|', '|', ('is_trial_period', '=', False), ('trial_renewed', '=', True), ('state', '!=', 'open')]}"/>
+                        </group>
+                    </group>
+                    <group string="Conversion CDD" attrs="{'invisible': [('cdd_converted_to_cdi', '=', False)]}">
+                        <group>
+                            <field name="cdd_converted_to_cdi" readonly="1"/>
+                            <field name="cdd_conversion_date" readonly="1"/>
+                            <field name="cdd_conversion_reason" readonly="1"/>
+                        </group>
+                        <group>
+                             <button name="action_convert_cdd_to_cdi" string="Convertir en CDI" type="object" class="btn-primary" attrs="{'invisible': ['|', ('contract_type_extended', '!=', 'cdd'), ('state', '!=', 'open')]}"/>
+                        </group>
+                    </group>
+                    <group string="Notes">
+                        <field name="contract_notes" nolabel="1" placeholder="Notes spécifiques au contrat tunisien..."/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Contract Tree View (optional but helpful) -->
+    <record id="hr_contract_view_tree_extended" model="ir.ui.view">
+        <field name="name">hr.contract.tree.extended</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date_start']" position="before">
+                <field name="contract_type_extended" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

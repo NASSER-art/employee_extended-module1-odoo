@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree view for Permit Alerts (no create) -->
+    <record id="view_hr_permit_alert_tree" model="ir.ui.view">
+        <field name="name">hr.permit.alert.tree</field>
+        <field name="model">hr.permit.alert</field>
+        <field name="arch" type="xml">
+            <tree create="false" decoration-danger="state == 'expired'" decoration-warning="state == 'critical'" decoration-info="state == 'warning'">
+                <field name="name"/>
+                <field name="employee_name"/>
+                <field name="department_id"/>
+                <field name="permis_end_date"/>
+                <field name="days_remaining"/>
+                <field name="state"/>
+                <field name="alert_sent"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form view for Permit Alerts (no create) -->
+    <record id="view_hr_permit_alert_form" model="ir.ui.view">
+        <field name="name">hr.permit.alert.form</field>
+        <field name="model">hr.permit.alert</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="employee_name"/>
+                            <field name="department_id"/>
+                        </group>
+                        <group>
+                            <field name="permis_end_date"/>
+                            <field name="days_remaining"/>
+                            <field name="state"/>
+                            <field name="alert_sent"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Permit Alerts -->
+    <record id="action_hr_permit_alert" model="ir.actions.act_window">
+        <field name="name">Alertes Permis de Conduire</field>
+        <field name="res_model">hr.permit.alert</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu item removed on purpose (still accessible via action) -->
+</odoo>

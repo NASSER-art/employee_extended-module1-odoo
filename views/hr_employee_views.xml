@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Employee Form View -->
+    <record id="view_employee_form_extended" model="ir.ui.view">
+        <field name="name">hr.employee.form.extended</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Hide unwanted standard fields -->
+            <xpath expr="//field[@name='certificate']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='study_field']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='study_school']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='visa_no']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='permit_no']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='visa_expire']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='work_permit_expiration_date']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='identification_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='passport_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Hide standard department fields from original position to avoid redundancy -->
+            <xpath expr="//field[@name='department_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Add Extended HR Info notebook page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Informations RH Tunisie" name="hr_tunisia">
+                    <group>
+                        <group string="Structure Organisationnelle">
+                            <field name="assignment_department_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="department_id" string="Département" domain="[('parent_id', '=', assignment_department_id)]" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="sub_department_id" string="Sous-département" domain="[('parent_id', '=', department_id)]" options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                        <group string="Éducation">
+                            <field name="education_level"/>
+                            <field name="education_speciality"/>
+                            <field name="education_institution"/>
+                            <field name="education_year"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Permis de conduire">
+                        <group>
+                            <field name="has_driving_permit"/>
+                            <field name="driving_permit_number" attrs="{'invisible': [('has_driving_permit', '=', False)]}"/>
+                            <field name="driving_permit_category" attrs="{'invisible': [('has_driving_permit', '=', False)]}"/>
+                        </group>
+                        <group>
+                            <field name="send_permit_alert_mail" attrs="{'invisible': [('has_driving_permit', '=', False)]}"/>
+                            <field name="send_permit_alert_to_manager" attrs="{'invisible': [('has_driving_permit', '=', False)]}"/>
+                            <field name="permis_end_date" attrs="{'invisible': [('has_driving_permit', '=', False)]}"/>
+                            <field name="permis_days_remaining" attrs="{'invisible': [('has_driving_permit', '=', False)]}"/>
+                            <field name="permis_status" attrs="{'invisible': [('has_driving_permit', '=', False)]}"/>
+                        </group>
+                        <group attrs="{'invisible': [('has_driving_permit', '=', False)]}">
+                            <field name="permis_attachment" filename="permis_attachment_name"/>
+                            <field name="permis_attachment_name" invisible="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Informations sociales">
+                        <group>
+                            <field name="civil_status_extended"/>
+                            <field name="chef_de_famille" attrs="{'invisible': [('show_chef_de_famille', '=', False)]}"/>
+                            <field name="show_chef_de_famille" invisible="1"/>
+                            <field name="nombre_enfants"/>
+                            <field name="conjoint_name" attrs="{'invisible': [('civil_status_extended', '!=', 'married')]}"/>
+                            <field name="conjoint_employer" attrs="{'invisible': [('civil_status_extended', '!=', 'married')]}"/>
+                        </group>
+                        <group>
+                            <field name="cin_number"/>
+                            <field name="cin_delivery_date"/>
+                            <field name="cin_delivery_place"/>
+                            <field name="cin_attachment" filename="cin_attachment_name"/>
+                            <field name="cin_attachment_name" invisible="1"/>
+                            <field name="cnss_number"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Type de contrat">
+                        <group attrs="{'invisible': [('contract_id', '=', False)]}">
+                            <field name="contract_id" invisible="1"/>
+                            <field name="contract_state" invisible="1"/>
+                            <field name="contract_type_extended" attrs="{'required': [('contract_id', '!=', False)]}"/>
+                            <field name="contract_start_date" string="Date de début"/>
+                            <field name="contract_end_date" string="Date de fin" attrs="{'invisible': [('contract_type_extended', '!=', 'cdd')], 'required': [('contract_type_extended', '=', 'cdd')]}"/>
+                            <field name="cdd_reason" attrs="{'invisible': [('contract_type_extended', '!=', 'cdd')], 'required': [('contract_type_extended', '=', 'cdd')]}"/>
+                        </group>
+                        <group attrs="{'invisible': ['|', ('contract_type_extended', '!=', 'cdi'), ('contract_id', '=', False)]}">
+                            <field name="is_trial_period"/>
+                            <field name="trial_start_date" attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                            <field name="trial_end_date" attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                            <field name="trial_renewed" attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                            <field name="trial_status" attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                            <button name="action_renew_trial" string="Renouveler l'essai" type="object" class="btn-primary" attrs="{'invisible': ['|', '|', ('is_trial_period', '=', False), ('trial_renewed', '=', True), ('contract_state', '!=', 'open')]}"/>
+                        </group>
+                        <group attrs="{'invisible': [('contract_id', '!=', False)]}">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Note:</strong> Veuillez créer un contrat pour cet employé afin de gérer les informations contractuelles détaillées.
+                            </div>
+                        </group>
+                    </group>
+                    
+                    <group string="Conversion CDD" attrs="{'invisible': [('cdd_converted_to_cdi', '=', False)]}">
+                        <field name="cdd_converted_to_cdi" invisible="1"/>
+                        <field name="cdd_conversion_date"/>
+                        <field name="cdd_conversion_reason"/>
+                    </group>
+                    
+                    <group string="Notes">
+                        <field name="contract_notes" nolabel="1"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Employee Tree View -->
+    <record id="view_employee_tree_extended" model="ir.ui.view">
+        <field name="name">hr.employee.tree.extended</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='department_id']" position="before">
+                <field name="assignment_department_id" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='department_id']" position="after">
+                <field name="sub_department_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Employee Search View -->
+    <record id="view_employee_filter_extended" model="ir.ui.view">
+        <field name="name">hr.employee.search.extended</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='department_id']" position="before">
+                <field name="assignment_department_id"/>
+            </xpath>
+            <xpath expr="//field[@name='department_id']" position="after">
+                <field name="sub_department_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_department']" position="before">
+                <filter name="group_assignment_department" string="Département d'affectation" domain="[]" context="{'group_by': 'assignment_department_id'}"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_department']" position="after">
+                <filter name="group_sub_department" string="Sous-département" domain="[]" context="{'group_by': 'sub_department_id'}"/>
+            </xpath>
+            <xpath expr="//searchpanel/field[@name='department_id']" position="before">
+                <field name="assignment_department_id" icon="fa-building" enable_counters="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
+
+

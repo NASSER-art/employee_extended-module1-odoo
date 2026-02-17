@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Cron job pour vérifier l'expiration des permis de conduire -->
+    <record id="cron_check_permit_expiry" model="ir.cron">
+        <field name="name">Employee Extended: Vérification expiration permis</field>
+        <field name="model_id" ref="model_hr_employee"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_permit_expiry()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Cron job pour vérifier les CDD arrivés à terme -->
+    <record id="cron_check_cdd_expiry" model="ir.cron">
+        <field name="name">Employee Extended: Vérification expiration CDD</field>
+        <field name="model_id" ref="model_hr_employee"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_cdd_expiry()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Cron job pour vérifier les périodes d'essai terminées -->
+    <record id="cron_check_trial_period" model="ir.cron">
+        <field name="name">Employee Extended: Vérification périodes d'essai</field>
+        <field name="model_id" ref="model_hr_employee"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_trial_period()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

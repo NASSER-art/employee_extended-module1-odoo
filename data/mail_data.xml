@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Brevo SMTP Server Configuration -->
+    <record id="mail_server_brevo" model="ir.mail_server">
+        <field name="name">Brevo SMTP</field>
+        <field name="smtp_host">smtp-relay.brevo.com</field>
+        <field name="smtp_port">587</field>
+        <field name="smtp_encryption">starttls</field>
+        <field name="smtp_user">994b80001@smtp-brevo.com</field>
+        <field name="smtp_pass">xsmtpsib-b116b34acef80d1164b622c779a4f1a5b5ed64325caa26af56e992140efb336c-eO8tsze5jQuUd2MX</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <!-- Email Template for Permit Expiry -->
+    <record id="email_template_permit_expiry" model="mail.template">
+        <field name="name">Expiration de Permis: Alerte Employé</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="auto_delete" eval="False"/>
+        <field name="subject">⚠️ Alerte Expiration Votre Permis de Conduire - {{ object.name }}</field>
+        <field name="email_from">"Moderne metale RH" &lt;nasserletaif4@gmail.com&gt;</field>
+        <field name="body_html" type="xml">
+            <div style="margin: 0px; padding: 0px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                <p>Bonjour,</p>
+                <p>Ceci est une alerte automatique concernant l'expiration prochaine du permis de conduire de l'employé suivant :</p>
+                <ul>
+                    <li><strong>Employé :</strong> <t t-out="object.name"/></li>
+                    <li><strong>Département :</strong> <t t-out="object.department_id.name"/></li>
+                    <li><strong>Catégorie Permis :</strong> <t t-out="object.driving_permit_category"/></li>
+                    <li><strong>Date d'expiration :</strong> <t t-out="object.permis_end_date"/></li>
+                    <li><strong>Jours restants :</strong> <t t-out="object.permis_days_remaining"/> jours</li>
+                </ul>
+                <p>Merci de prendre les mesures nécessaires.</p>
+                <br/>
+                <p>Cordialement,</p>
+                <p>Système GRH</p>
+            </div>
+        </field>
+    </record>
+</odoo>

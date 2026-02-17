@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Formulaire pour la configuration -->
+    <record id="view_hr_permit_config_form" model="ir.ui.view">
+        <field name="name">hr.permit.config.form</field>
+        <field name="model">hr.permit.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuration des Alertes Permis" create="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Configuration des Alertes Permis</h1>
+                    </div>
+                    <group>
+                        <group name="trigger_config" string="Réglages du Déclenchement">
+                            <field name="notify_before_days"/>
+                            <p class="text-muted" colspan="2">
+                                Définit le nombre de jours avant l'expiration pour envoyer l'email d'alerte.
+                            </p>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Enregistrement par défaut (Singleton) -->
+    <record id="hr_permit_config_default" model="hr.permit.config">
+        <field name="notify_before_days">7</field>
+    </record>
+
+    <!-- Action pour ouvrir la configuration -->
+    <record id="action_hr_permit_config" model="ir.actions.act_window">
+        <field name="name">Config Mail</field>
+        <field name="res_model">hr.permit.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="res_id" ref="hr_permit_config_default"/>
+    </record>
+
+    <!-- Menu Configuration Mail -->
+    <menuitem id="menu_hr_permit_config"
+              name="Config Mail"
+              parent="hr.menu_human_resources_configuration"
+              action="action_hr_permit_config"
+              sequence="100"/>
+</odoo>

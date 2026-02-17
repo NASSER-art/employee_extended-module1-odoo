@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="employee_extended.PermitNotificationMenu" owl="1">
+        <div class="o_mail_systray_dropdown" t-if="state.count > 0">
+            <button class="btn btn-link" t-on-click="onClick" title="Alertes permis de conduire">
+                <i class="fa fa-id-card text-warning"/>
+                <span class="badge badge-pill badge-danger" t-if="state.count > 0">
+                    <t t-esc="state.count"/>
+                </span>
+            </button>
+        </div>
+    </t>
+</templates>
