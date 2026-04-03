@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================== -->
+    <!-- Page Permis de Conduire - Fiche Employé            -->
+    <!-- ================================================== -->
+    <record id="view_employee_form_permit" model="ir.ui.view">
+        <field name="name">hr.employee.form.permit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="employee_extended.view_employee_form_extended"/>
+        <field name="priority">57</field>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='page_permit']" position="inside">
+                <group>
+                        <group string="Informations du permis" col="2">
+                            <field name="has_driving_permit"/>
+                            <field name="driving_permit_number"
+                                   attrs="{'invisible': [('has_driving_permit', '=', False)]}"
+                                   placeholder="Numéro du permis"/>
+                            <field name="driving_permit_category"
+                                   attrs="{'invisible': [('has_driving_permit', '=', False)]}"/>
+                            <field name="send_permit_alert_mail"
+                                   attrs="{'invisible': [('has_driving_permit', '=', False)]}"
+                                   string="✉️ Envoyer les alertes par email"/>
+                            <field name="send_permit_alert_to_manager"
+                                   attrs="{'invisible': [('has_driving_permit', '=', False)]}"
+                                   string="CC: Manager"/>
+                        </group>
+                        <group string="Validité"
+                               attrs="{'invisible': [('has_driving_permit', '=', False)]}"
+                               col="2">
+                            <field name="permis_end_date"/>
+                            <field name="permis_days_remaining"
+                                   attrs="{'invisible': [('permis_end_date', '=', False)]}"/>
+                            <field name="permis_status" widget="badge"
+                                   decoration-success="permis_status == 'valid'"
+                                   decoration-warning="permis_status == 'warning'"
+                                   decoration-danger="permis_status in ('critical', 'expired')"
+                                   decoration-muted="permis_status == 'na'"
+                                   attrs="{'invisible': [('has_driving_permit', '=', False)]}"/>
+                        </group>
+                    </group>
+                    <group attrs="{'invisible': [('has_driving_permit', '=', False)]}">
+                        <group string="Document" col="2">
+                            <field name="permis_attachment"
+                                   filename="permis_attachment_name"
+                                   widget="binary"/>
+                            <field name="permis_attachment_name" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Alerte visuelle si permis expiré ou critique -->
+                    <div class="alert alert-danger" role="alert"
+                         attrs="{'invisible': [('permis_status', 'not in', ['expired', 'critical'])]}">
+                        <strong>
+                            <i class="fa fa-exclamation-triangle"/>
+                            ATTENTION :
+                        </strong>
+                        <span attrs="{'invisible': [('permis_status', '!=', 'expired')]}">
+                            Le permis de conduire de cet employé est <b>EXPIRÉ</b>.
+                            Veuillez prendre les mesures nécessaires immédiatement.
+                        </span>
+                        <span attrs="{'invisible': [('permis_status', '!=', 'critical')]}">
+                            Le permis de conduire de cet employé expire dans
+                            <b><field name="permis_days_remaining" readonly="1" class="d-inline"/> jours</b>.
+                            Veuillez planifier son renouvellement.
+                        </span>
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                         attrs="{'invisible': [('permis_status', '!=', 'warning')]}">
+                        <strong>
+                            <i class="fa fa-clock-o"/>
+                            RAPPEL :
+                        </strong>
+                        Le permis de conduire expire dans
+                        <b><field name="permis_days_remaining" readonly="1" class="d-inline"/> jours</b>.
+                        Pensez au renouvellement.
+                    </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

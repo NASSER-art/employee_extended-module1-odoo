@@ -18,6 +18,7 @@
                             </p>
                         </group>
                     </group>
+                
                 </sheet>
             </form>
         </field>
@@ -25,7 +26,6 @@
 
     <!-- Enregistrement par défaut (Singleton) -->
     <record id="hr_permit_config_default" model="hr.permit.config">
-        <field name="notify_before_days">7</field>
     </record>
 
     <!-- Action pour ouvrir la configuration -->
@@ -35,6 +35,17 @@
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="res_id" ref="hr_permit_config_default"/>
+    </record>
+
+    <!-- Action serveur: Tester manuellement le cron -->
+    <record id="action_test_permit_cron" model="ir.actions.server">
+        <field name="name">🔍 Tester le cron (Vérifier les permis)</field>
+        <field name="model_id" ref="base.model_ir_model"/>
+        <field name="binding_model_id" ref="employee_extended.model_hr_permit_config"/>
+        <field name="state">code</field>
+        <field name="code">
+env['hr.employee']._cron_check_permit_expiry()
+        </field>
     </record>
 
     <!-- Menu Configuration Mail -->

@@ -1,21 +1,68 @@
 # -*- coding: utf-8 -*-
-import logging
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 
-_logger = logging.getLogger(__name__)
-
 class HrContract(models.Model):
     _inherit = 'hr.contract'
+
+    def _get_trial_end_date_from_start(self, start_date, renewed=False):
+        months = 12 if renewed else 6
+        return start_date + relativedelta(months=months) - relativedelta(days=1)
+
+    def _apply_cdi_trial_sync_to_vals(self, vals, is_cdi=False):
+        vals = dict(vals)
+        if not is_cdi:
+            return vals
+        if vals.get('trial_date_start'):
+            vals['date_start'] = vals['trial_date_start']
+        if vals.get('trial_date_end'):
+            vals['date_end'] = vals['trial_date_end']
+        return vals
+
+    def _get_cdi_autofix_vals(self, force_initial_trial=False):
+        self.ensure_one()
+        vals = {}
+        if self.contract_type_extended != 'cdi':
+            return vals
+
+        # Only sync trial dates to contract dates during initial trial period setup
+        if force_initial_trial:
+            if self.trial_date_start and self.date_start != self.trial_date_start:
+                vals['date_start'] = self.trial_date_start
+            if self.trial_date_end and self.date_end != self.trial_date_end:
+                vals['date_end'] = self.trial_date_end
+
+        if force_initial_trial and self.date_start and not self.is_trial_period:
+            vals['is_trial_period'] = True
+
+        if self.date_start and (self.is_trial_period or vals.get('is_trial_period')):
+            if force_initial_trial:
+                renewed = False
+                expected_end = self._get_trial_end_date_from_start(self.date_start, renewed=renewed)
+                if self.trial_date_start != self.date_start:
+                    vals['trial_date_start'] = self.date_start
+                if self.trial_date_end != expected_end:
+                    vals['trial_date_end'] = expected_end
+                if self.trial_renewed:
+                    vals['trial_renewed'] = False
+            else:
+                if not self.trial_date_start:
+                    vals['trial_date_start'] = self.date_start
+                if not self.trial_date_end:
+                    base_start = self.trial_date_start or self.date_start
+                    vals['trial_date_end'] = self._get_trial_end_date_from_start(
+                        base_start, renewed=bool(self.trial_renewed)
+                    )
+        return vals
 
     contract_type_extended = fields.Selection([
         ('cdi', 'CDI - Contrat à Durée Indéterminée'),
         ('cdd', 'CDD - Contrat à Durée Déterminée'),
         ('sivp', 'SIVP - Stage d\'Initiation à la Vie Professionnelle'),
         ('karma', 'Karma - Programme d\'Emploi et de Travail Décent'),
-    ], string="Type de contrat Tunisie",
+    ], string="Type de contrat",
        default='cdi',
        tracking=True,
        help="CDI par défaut sauf exceptions légales. SIVP et Karma sont des programmes tunisiens.")
@@ -89,12 +136,81 @@ class HrContract(models.Model):
     def _onchange_contract_type_extended(self):
         if self.contract_type_extended == 'cdi':
             self.cdd_reason = False
-            self.date_end = False
+            # Ne pas cocher automatiquement la période d'essai - laisser l'utilisateur le faire manuellement
+            if not self.is_trial_period:
+                self.trial_date_start = False
+                self.trial_date_end = False
+                self.trial_renewed = False
         elif self.contract_type_extended == 'cdd':
             self.is_trial_period = False
             self.trial_date_start = False
             self.trial_date_end = False
             self.trial_renewed = False
+
+    @api.onchange('date_start', 'is_trial_period', 'trial_renewed', 'trial_date_start', 'trial_date_end')
+    def _onchange_sync_cdi_trial_and_contract_dates(self):
+        for contract in self:
+            if contract.contract_type_extended != 'cdi':
+                continue
+
+            # Si la période d'essai est décochée, vider les dates de fin et d'essai
+            if not contract.is_trial_period:
+                contract.date_end = False
+                contract.trial_date_start = False
+                contract.trial_date_end = False
+                contract.trial_renewed = False
+                continue
+
+            # Les dates d'essai ne se synchronisent que si la période d'essai est cochée
+            if contract.trial_date_start and contract.is_trial_period:
+                contract.date_start = contract.trial_date_start
+            elif contract.is_trial_period and contract.date_start:
+                contract.trial_date_start = contract.date_start
+
+            if contract.trial_date_end and contract.is_trial_period:
+                contract.date_end = contract.trial_date_end
+            elif contract.is_trial_period and contract.trial_date_start:
+                contract.trial_date_end = contract._get_trial_end_date_from_start(
+                    contract.trial_date_start,
+                    renewed=bool(contract.trial_renewed),
+                )
+                contract.date_end = contract.trial_date_end
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        normalized_vals_list = []
+        for vals in vals_list:
+            is_cdi = vals.get('contract_type_extended') == 'cdi'
+            new_vals = self._apply_cdi_trial_sync_to_vals(vals, is_cdi=is_cdi)
+            normalized_vals_list.append(new_vals)
+
+        vals_list = normalized_vals_list
+        contracts = super().create(vals_list)
+        for contract in contracts:
+            # Only auto-fix trial dates if the user explicitly enabled trial period
+            force_initial_trial = contract.contract_type_extended == 'cdi' and contract.is_trial_period
+            fix_vals = contract._get_cdi_autofix_vals(force_initial_trial=force_initial_trial)
+            if fix_vals:
+                super(HrContract, contract).write(fix_vals)
+        return contracts
+
+    def write(self, vals):
+        vals = dict(vals)
+        target_is_cdi = vals.get('contract_type_extended') == 'cdi' or any(c.contract_type_extended == 'cdi' for c in self)
+        vals = self._apply_cdi_trial_sync_to_vals(vals, is_cdi=target_is_cdi)
+
+        res = super().write(vals)
+        for contract in self:
+            # Only auto-fix trial dates if the user explicitly enables is_trial_period
+            force_initial_trial = (
+                'is_trial_period' in vals
+                and vals['is_trial_period'] is True
+                and contract.contract_type_extended == 'cdi'
+            )
+            fix_vals = contract._get_cdi_autofix_vals(force_initial_trial=force_initial_trial)
+            if fix_vals:
+                super(HrContract, contract).write(fix_vals)
+        return res
 
     @api.constrains('trial_date_start', 'trial_date_end', 'trial_renewed')
     def _check_trial_period_tunisia(self):
@@ -117,6 +233,9 @@ class HrContract(models.Model):
     @api.constrains('contract_type_extended', 'cdd_reason')
     def _check_cdd_reason(self):
         for contract in self:
+            # Only validate if record is already saved in database (has an id)
+            if not contract.id:
+                continue
             if contract.contract_type_extended == 'cdd' and not contract.cdd_reason:
                 raise ValidationError(_("Un CDD doit obligatoirement avoir un motif."))
 
@@ -177,6 +296,7 @@ class HrContract(models.Model):
                 'cdd_conversion_date': today,
                 'cdd_conversion_reason': 'continued_after_end',
                 'date_end': False,
+                'cdd_reason': False,
             })
             body = _("🔄 <b>CONVERSION AUTOMATIQUE CDD → CDI</b> : Le CDD de ce contrat a pris fin le %s.") % prev_end
             contract.message_post(body=body)

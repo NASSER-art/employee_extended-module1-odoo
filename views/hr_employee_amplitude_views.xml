@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================== -->
+    <!-- Page Fiche d'Amplitude - Fiche Employé             -->
+    <!-- ================================================== -->
+    <record id="view_employee_form_amplitude" model="ir.ui.view">
+        <field name="name">hr.employee.form.amplitude</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="employee_extended.view_employee_form_extended"/>
+        <field name="priority">59</field>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='page_fiche_amplitude']" position="inside">
+                <group>
+                        <group string="Visite médicale">
+                            <div colspan="2">
+                                <span class="o_form_label">
+                                    Créer une nouvelle fiche d'amplitude pour cet employé.
+                                </span>
+                            </div>
+                            <div colspan="2">
+                                <button name="action_open_medical_exam_wizard"
+                                        string="Nouvelle fiche"
+                                        type="object"
+                                        class="btn-primary"/>
+                            </div>
+                        </group>
+                    </group>
+                    <div class="o_group o_group_col_md_6" style="width: 100%;">
+                        <h3 class="o_group_title">Historique</h3>
+                        <button name="action_view_all_fiches" 
+                                string="📋 Voir toutes les fiches d'amplitude"
+                                type="object" 
+                                class="btn-secondary"
+                                help="Affiche l'historique complet des fiches avec tous les détails"/>
+                    </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

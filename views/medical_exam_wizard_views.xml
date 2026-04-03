@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================== -->
+    <!-- Wizard pour saisie de fiche d'amplitude           -->
+    <!-- ================================================== -->
+
+    <record id="view_medical_exam_wizard_form" model="ir.ui.view">
+        <field name="name">medical.exam.wizard.form</field>
+        <field name="model">medical.exam.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <h2>INTRO / MODIF FICHE D'APTITUDE AU TRAVAIL</h2>
+
+                <group>
+                    <group>
+                        <field name="employee_id"/>
+                    </group>
+                    <group>
+                        <field name="examination_date"/>
+                        <field name="next_examination_date" readonly="1"/>
+                    </group>
+                </group>
+
+                <group>
+                    <group string="Type">
+                        <field name="exam_type_id"/>
+                        <field name="exam_type_code" readonly="1"/>
+                    </group>
+                    <group string="Durée">
+                        <field name="validity_months" readonly="1"/>
+                        <field name="validity_extra_days" readonly="1"/>
+                        <field name="expiry_date" readonly="1"/>
+                    </group>
+                </group>
+
+                <group string="Conclusion">
+                    <field name="aptitude_result" widget="radio"/>
+                    <field name="aptitude_details" nolabel="1"
+                           placeholder="Préciser le poste, les EPI, les recommandations, la durée, etc."/>
+                </group>
+
+                <group string="Médecin">
+                    <group>
+                        <field name="doctor_name"/>
+                        <field name="medical_center"/>
+                    </group>
+                </group>
+
+                <group string="Observations &amp; restrictions">
+                    <field name="restrictions" placeholder="Restrictions de travail" nolabel="1"/>
+                    <field name="notes" placeholder="Notes du médecin" nolabel="1"/>
+                </group>
+
+                <group string="Document">
+                    <field name="document"/>
+                    <field name="document_name" invisible="1"/>
+                </group>
+
+                <footer>
+                    <button name="action_create_medical_exam" string="Valider" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_medical_exam_wizard" model="ir.actions.act_window">
+        <field name="name">Nouvelle Fiche d'Amplitude</field>
+        <field name="res_model">medical.exam.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_medical_exam_wizard"
+              name="+ Nouvelle Fiche"
+              parent="employee_extended.menu_fiche_amplitude_root"
+              action="action_medical_exam_wizard"
+              sequence="1"/>
+
+</odoo>

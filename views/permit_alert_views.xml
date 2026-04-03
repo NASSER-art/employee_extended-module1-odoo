@@ -1,42 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Tree view for Permit Alerts (no create) -->
-    <record id="view_hr_permit_alert_tree" model="ir.ui.view">
+
+    <!-- ================================================== -->
+    <!-- Vues pour les alertes de permis                    -->
+    <!-- ================================================== -->
+
+    <!-- Vue Liste des alertes -->
+    <record id="view_permit_alert_tree" model="ir.ui.view">
         <field name="name">hr.permit.alert.tree</field>
         <field name="model">hr.permit.alert</field>
         <field name="arch" type="xml">
-            <tree create="false" decoration-danger="state == 'expired'" decoration-warning="state == 'critical'" decoration-info="state == 'warning'">
-                <field name="name"/>
+            <tree decoration-danger="state == 'expired'"
+                  decoration-warning="state == 'critical'"
+                  decoration-info="state == 'warning'"
+                  decoration-success="state == 'valid'"
+                  default_order="permis_end_date asc"
+                  create="false">
                 <field name="employee_name"/>
                 <field name="department_id"/>
                 <field name="permis_end_date"/>
                 <field name="days_remaining"/>
-                <field name="state"/>
-                <field name="alert_sent"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'valid'"
+                       decoration-warning="state == 'warning'"
+                       decoration-danger="state in ('critical', 'expired')"/>
+                <field name="alert_sent" widget="boolean"
+                       string="✉️ Email"/>
             </tree>
         </field>
     </record>
 
-    <!-- Form view for Permit Alerts (no create) -->
-    <record id="view_hr_permit_alert_form" model="ir.ui.view">
+    <!-- Vue Formulaire alerte -->
+    <record id="view_permit_alert_form" model="ir.ui.view">
         <field name="name">hr.permit.alert.form</field>
         <field name="model">hr.permit.alert</field>
         <field name="arch" type="xml">
-            <form create="false" edit="false">
+            <form create="false">
+                <header>
+                    <button name="action_resend_alert"
+                            string="♻️ Renvoyer l'Email d'Alerte"
+                            type="object"
+                            class="btn-secondary"
+                            attrs="{'invisible': [('alert_sent', '=', False)]}"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="valid,warning,critical,expired"/>
+                </header>
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
                     <group>
-                        <group>
-                            <field name="employee_id"/>
-                            <field name="employee_name"/>
-                            <field name="department_id"/>
+                        <group string="Employé">
+                            <field name="employee_id" readonly="1"/>
+                            <field name="employee_name" readonly="1"/>
+                            <field name="department_id" readonly="1"/>
                         </group>
-                        <group>
-                            <field name="permis_end_date"/>
-                            <field name="days_remaining"/>
-                            <field name="state"/>
-                            <field name="alert_sent"/>
+                        <group string="Permis">
+                            <field name="permis_end_date" readonly="1"/>
+                            <field name="days_remaining" readonly="1"/>
+                            <field name="driving_permit_category" readonly="1"/>
+                            <field name="state" readonly="1"/>
+                            <field name="alert_sent" readonly="1" widget="boolean"
+                                   string="✉️ Email envoyé"/>
                         </group>
                     </group>
+
+                    <!-- Alerte visuelle -->
+                    <div class="alert alert-danger mt-3" role="alert"
+                         attrs="{'invisible': [('state', '!=', 'expired')]}">
+                        <h4 class="alert-heading">
+                            <i class="fa fa-exclamation-triangle"/>
+                            Permis Expiré !
+                        </h4>
+                        <p>Le permis de conduire de cet employé est expiré.
+                           Action immédiate requise.</p>
+                    </div>
+                    <div class="alert alert-warning mt-3" role="alert"
+                         attrs="{'invisible': [('state', '!=', 'critical')]}">
+                        <h4 class="alert-heading">
+                            <i class="fa fa-exclamation-circle"/>
+                            Expiration Critique !
+                        </h4>
+                        <p>Le permis expire dans moins de 15 jours.</p>
+                    </div>
                 </sheet>
                 <div class="oe_chatter">
                     <field name="message_follower_ids"/>
@@ -47,12 +95,172 @@
         </field>
     </record>
 
-    <!-- Action for Permit Alerts -->
-    <record id="action_hr_permit_alert" model="ir.actions.act_window">
-        <field name="name">Alertes Permis de Conduire</field>
-        <field name="res_model">hr.permit.alert</field>
-        <field name="view_mode">tree,form</field>
+    <!-- Vue Kanban alertes -->
+    <record id="view_permit_alert_kanban" model="ir.ui.view">
+        <field name="name">hr.permit.alert.kanban</field>
+        <field name="model">hr.permit.alert</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_small_column">
+                <field name="employee_name"/>
+                <field name="permis_end_date"/>
+                <field name="days_remaining"/>
+                <field name="state"/>
+                <field name="department_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="employee_name"/>
+                                        </strong>
+                                    </div>
+                                    <field name="state" widget="label_selection"
+                                           options="{'classes': {
+                                               'valid': 'success',
+                                               'warning': 'warning',
+                                               'critical': 'danger',
+                                               'expired': 'danger'
+                                           }}"/>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div>
+                                        <i class="fa fa-building-o"/>
+                                        <field name="department_id"/>
+                                    </div>
+                                    <div>
+                                        <i class="fa fa-calendar"/>
+                                        Expire: <field name="permis_end_date"/>
+                                    </div>
+                                    <div t-if="record.days_remaining.raw_value &lt;= 0"
+                                         class="text-danger fw-bold">
+                                        <i class="fa fa-exclamation-triangle"/>
+                                        EXPIRÉ
+                                    </div>
+                                    <div t-elif="record.days_remaining.raw_value &lt;= 15"
+                                         class="text-danger">
+                                        <i class="fa fa-clock-o"/>
+                                        <field name="days_remaining"/> jours restants
+                                    </div>
+                                    <div t-else="" class="text-warning">
+                                        <i class="fa fa-clock-o"/>
+                                        <field name="days_remaining"/> jours restants
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
     </record>
 
-    <!-- Menu item removed on purpose (still accessible via action) -->
+    <!-- Vue Recherche alertes -->
+    <record id="view_permit_alert_search" model="ir.ui.view">
+        <field name="name">hr.permit.alert.search</field>
+        <field name="model">hr.permit.alert</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_name"/>
+                <field name="department_id"/>
+                <separator/>
+                <filter string="Alerte envoyée" name="filter_alert_sent"
+                        domain="[('alert_sent', '=', True)]"/>
+                <filter string="Alerte non envoyée" name="filter_alert_not_sent"
+                        domain="[('alert_sent', '=', False)]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="État" name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Département" name="group_department"
+                            context="{'group_by': 'department_id'}"/>
+                    <filter string="Date d'expiration" name="group_end_date"
+                            context="{'group_by': 'permis_end_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Vue graphique alertes -->
+    <record id="view_permit_alert_graph" model="ir.ui.view">
+        <field name="name">hr.permit.alert.graph</field>
+        <field name="model">hr.permit.alert</field>
+        <field name="arch" type="xml">
+            <graph string="Alertes de permis" type="bar">
+                <field name="state" type="col"/>
+                <field name="employee_name" type="row"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Vue pivot alertes -->
+    <record id="view_permit_alert_pivot" model="ir.ui.view">
+        <field name="name">hr.permit.alert.pivot</field>
+        <field name="model">hr.permit.alert</field>
+        <field name="arch" type="xml">
+            <pivot string="Alertes de permis">
+                <field name="department_id" type="row"/>
+                <field name="state" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ================================================== -->
+    <!-- Action et Menu Alerte Permis                       -->
+    <!-- ================================================== -->
+
+    <!-- Action principale - Toutes les alertes -->
+    <record id="action_permit_alert" model="ir.actions.act_window">
+        <field name="name">Alertes Permis de Conduire</field>
+        <field name="res_model">hr.permit.alert</field>
+        <field name="view_mode">tree,kanban,form,graph,pivot</field>
+        <field name="search_view_id" ref="view_permit_alert_search"/>
+        <field name="context">{'search_default_filter_critical': 1,
+                                'search_default_filter_expired': 1,
+                                'search_default_filter_warning': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune alerte de permis en cours
+            </p>
+            <p>
+                Les alertes apparaissent automatiquement lorsque les permis
+                de conduire des employés approchent de leur date d'expiration
+                ou sont déjà expirés. Utilisez les filtres pour voir les alertes
+            </p>
+        </field>
+    </record>
+
+    <!-- Action - Vue directe depuis employé -->
+    <record id="action_employee_permit_expiring" model="ir.actions.act_window">
+        <field name="name">Employés - Permis à renouveler</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('has_driving_permit', '=', True),
+                              ('permis_status', 'in', ['valid', 'warning', 'critical', 'expired'])]</field>
+        <field name="context">{'search_default_filter_permit_critical': 1}</field>
+    </record>
+
+    <!-- ================================================== -->
+    <!-- Menus                                              -->
+    <!-- ================================================== -->
+
+    <!-- Menu principal Alerte Permis dans RH -->
+    <menuitem id="menu_permit_alert_root"
+              name="Alertes Permis"
+              parent="hr.menu_hr_root"
+              sequence="90"
+              groups="hr.group_hr_user"/>
+
+    <menuitem id="menu_permit_alert_all"
+              name="Toutes les alertes"
+              parent="menu_permit_alert_root"
+              action="action_permit_alert"
+              sequence="10"/>
+
+    <menuitem id="menu_employee_permit_expiring"
+              name="Employés concernés"
+              parent="menu_permit_alert_root"
+              action="action_employee_permit_expiring"
+              sequence="30"/>
+
 </odoo>

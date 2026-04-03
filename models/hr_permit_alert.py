@@ -30,6 +30,11 @@ class HrPermitAlert(models.Model):
         string="Département",
         store=True,
     )
+    driving_permit_category = fields.Selection(
+        related='employee_id.driving_permit_category',
+        string="Catégorie du permis",
+        store=True,
+    )
     permis_end_date = fields.Date(
         related='employee_id.permis_end_date',
         string="Date de fin du permis",
@@ -37,15 +42,18 @@ class HrPermitAlert(models.Model):
     )
     days_remaining = fields.Integer(
         string="Jours restants",
-        compute='_compute_days_remaining',
         store=True,
+        help="Nombre de jours avant expiration (calculé lors de la dernière vérification)"
     )
     state = fields.Selection([
         ('valid', 'Valide'),
-        ('warning', 'Attention (< 30 jours)'),
-        ('critical', 'Critique (< 15 jours)'),
+        ('warning', 'Attention'),
+        ('critical', 'Critique'),
         ('expired', 'Expiré'),
-    ], string="État", compute='_compute_state', store=True)
+        ('na', 'N/A'),
+    ], string="État",
+        store=True,
+    )
     alert_sent = fields.Boolean(string="Alerte envoyée", default=False)
     company_id = fields.Many2one(
         'res.company',
@@ -61,24 +69,19 @@ class HrPermitAlert(models.Model):
             else:
                 record.name = "Nouveau"
 
-    @api.depends('permis_end_date')
-    def _compute_days_remaining(self):
-        today = date.today()
+    def action_resend_alert(self):
+        """Réinitialiser l'alerte pour forcer un renvoi automatique au prochain cron"""
         for record in self:
-            if record.permis_end_date:
-                delta = record.permis_end_date - today
-                record.days_remaining = delta.days
-            else:
-                record.days_remaining = 0
+            record.alert_sent = False
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': "Alerte réinitialisée",
+                'message': "L'email d'alerte sera renvoyé au prochain cron job (24h max)",
+                'type': 'success',
+                'sticky': False,
+            }
+        }
 
-    @api.depends('days_remaining')
-    def _compute_state(self):
-        for record in self:
-            if record.days_remaining <= 0:
-                record.state = 'expired'
-            elif record.days_remaining <= 15:
-                record.state = 'critical'
-            elif record.days_remaining <= 30:
-                record.state = 'warning'
-            else:
-                record.state = 'valid'

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Medical Exam Types -->
+        <record id="medical_exam_type_periodique" model="medical.exam.type">
+            <field name="name">Périodique</field>
+            <field name="code">PER</field>
+            <field name="validity_days">365</field>
+            <field name="description">Annual medical check (recurring) - Required once per year for all employees</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="medical_exam_type_reprise" model="medical.exam.type">
+            <field name="name">Reprise</field>
+            <field name="code">REP</field>
+            <field name="validity_days">90</field>
+            <field name="description">Validation after a long absence (sick leave, accident) - Ensures employee fitness before resuming work</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="medical_exam_type_avant_reprise" model="medical.exam.type">
+            <field name="name">Avant reprise</field>
+            <field name="code">AVR</field>
+            <field name="validity_days">30</field>
+            <field name="description">Temporary/provisional certificate before returning to work - Fast-track certificate for return preparation</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="medical_exam_type_spontane" model="medical.exam.type">
+            <field name="name">Spontané</field>
+            <field name="code">SPO</field>
+            <field name="validity_days">365</field>
+            <field name="description">Exam requested by employee or employer before previous expiration - Overrides old expiration and resets validity for 1 year</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="medical_exam_type_embauche" model="medical.exam.type">
+            <field name="name">Embauche</field>
+            <field name="code">EMB</field>
+            <field name="validity_days">180</field>
+            <field name="description">Pre-employment medical check required before hiring - Mandatory health certification for new employees</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+</odoo>

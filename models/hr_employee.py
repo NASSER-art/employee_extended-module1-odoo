@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from datetime import date
 from odoo import models, fields, api, _
 
 class HrEmployee(models.Model):
@@ -9,7 +10,7 @@ class HrEmployee(models.Model):
 
     contract_type_extended = fields.Selection(
         related='contract_id.contract_type_extended',
-        string="Type de contrat Tunisie",
+        string="Type de contrat",
         readonly=False,
         store=True,
     )
@@ -115,3 +116,76 @@ class HrEmployee(models.Model):
         if self.contract_id:
             return self.contract_id.action_renew_trial()
         return False
+
+    def action_open_medical_exam_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Nouvelle Fiche d\'Amplitude'),
+            'res_model': 'medical.exam.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_employee_id': self.id,
+            },
+        }
+
+    fiche_aptitude_ids = fields.One2many(
+        'hr.fiche.aptitude',
+        'employee_id',
+        string="Fiches d'aptitude",
+    )
+
+    last_fiche_aptitude_id = fields.Many2one(
+        'hr.fiche.aptitude',
+        string="Dernière fiche d'aptitude",
+        compute="_compute_last_fiche_aptitude_id",
+        store=False,
+    )
+
+    @api.depends('fiche_aptitude_ids', 'fiche_aptitude_ids.examination_date')
+    def _compute_last_fiche_aptitude_id(self):
+        for employee in self:
+            employee.last_fiche_aptitude_id = self.env['hr.fiche.aptitude'].search(
+                [('employee_id', '=', employee.id)],
+                order='examination_date desc, id desc',
+                limit=1,
+            )
+
+    # ====================================================================
+    # OVERRIDE: Contract Warning Logic - Based on End Date, Not Status
+    # ====================================================================
+    @api.depends('contract_id', 'contract_id.date_end')
+    def _compute_contract_warning(self):
+        """
+        OVERRIDE: Avertissement de contrat basé sur la date de fin
+        
+        Avertissement = VRAI si:
+        1. L'employé n'a pas de contrat actuel
+        2. La date de fin du contrat approche (dans les 30 prochains jours)
+        
+        Avertissement = FAUX si:
+        - C'est un CDI (pas de date de fin)
+        """
+        for employee in self:
+            if not employee.contract_id:
+                # Pas de contrat actuel
+                employee.contract_warning = True
+            elif not employee.contract_id.date_end:
+                # CDI sans date de fin - pas d'avertissement
+                employee.contract_warning = False
+            else:
+                # Vérifier si la date de fin approche (dans les 30 prochains jours)
+                days_until_end = (employee.contract_id.date_end - date.today()).days
+                employee.contract_warning = days_until_end <= 30 and days_until_end > 0
+
+    def action_view_all_fiches(self):
+        """Ouvrir toutes les fiches d'aptitude de cet employé (actives ET inactives)"""
+        return {
+            'name': f'Fiches d\'aptitude - {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.fiche.aptitude',
+            'view_mode': 'list,form',
+            'domain': [('employee_id', '=', self.id)],
+            'context': {'active_test': False, 'search_default_group_employee': False},
+        }

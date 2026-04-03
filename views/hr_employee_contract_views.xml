@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================== -->
+    <!-- Page Contrat Étendu - Fiche Employé                -->
+    <!-- ================================================== -->
+    <record id="view_employee_form_contract" model="ir.ui.view">
+        <field name="name">hr.employee.form.contract</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="employee_extended.view_employee_form_extended"/>
+        <field name="priority">58</field>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='page_contract_ext']" position="inside">
+                
+                <!-- ===== RÉSUMÉ DU CONTRAT ACTUEL ===== -->
+                    <group string="Résumé du contrat actuel" col="2">
+                        <field name="contract_type_extended" widget="selection"/>
+                        <field name="contract_state" readonly="1" widget="badge"
+                               decoration-success="contract_state == 'running'"
+                               decoration-danger="contract_state == 'expired'"
+                               decoration-info="contract_state == 'new'"/>
+                        <field name="contract_start_date"/>
+                        <field name="contract_end_date"
+                               attrs="{'invisible': [('contract_type_extended', '=', 'cdi')]}"/>
+                    </group>
+
+                    <!-- ===== SECTION PÉRIODE D'ESSAI (CDI uniquement) ===== -->
+                    <group string="Période d'essai"
+                           attrs="{'invisible': [('contract_type_extended', '!=', 'cdi')]}"
+                           col="2">
+                        <field name="is_trial_period" 
+                               widget="boolean"
+                               help="Cocher pour activer la période d'essai (6 mois par défaut)"/>
+                        <div/>
+                        
+                        <field name="trial_start_date"
+                               attrs="{'invisible': [('is_trial_period', '=', False)],
+                                       'required': [('is_trial_period', '=', True)]}"/>
+                        <field name="trial_end_date"
+                               attrs="{'invisible': [('is_trial_period', '=', False)],
+                                       'required': [('is_trial_period', '=', True)]}"/>
+                        
+                        <field name="trial_renewed" readonly="1"
+                               attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                        <field name="trial_status" widget="badge" readonly="1"
+                               decoration-info="trial_status == 'in_progress'"
+                               decoration-warning="trial_status == 'renewed'"
+                               decoration-success="trial_status == 'completed'"
+                               decoration-danger="trial_status == 'terminated'"
+                               attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
+                    </group>
+
+                    <!-- ===== SECTION CDD ===== -->
+                    <group string="Détails CDD"
+                           attrs="{'invisible': [('contract_type_extended', '!=', 'cdd')]}"
+                           col="2">
+                        <field name="cdd_reason"
+                               attrs="{'required': [('contract_type_extended', '=', 'cdd')]}"/>
+                        <field name="contract_end_date"
+                               attrs="{'required': [('contract_type_extended', '=', 'cdd')]}"/>
+                        <field name="cdd_converted_to_cdi" readonly="1"/>
+                        <div/>
+                        <field name="cdd_conversion_date" readonly="1"
+                               attrs="{'invisible': [('cdd_converted_to_cdi', '=', False)]}"/>
+                        <field name="cdd_conversion_reason" readonly="1"
+                               attrs="{'invisible': [('cdd_converted_to_cdi', '=', False)]}"/>
+                        <button name="action_convert_cdd_to_cdi"
+                                string="Convertir en CDI"
+                                type="object"
+                                class="btn-primary"
+                                confirm="Êtes-vous sûr de vouloir convertir ce CDD en CDI ?"
+                                groups="hr.group_hr_manager"
+                                attrs="{'invisible': ['|',
+                                    ('contract_type_extended', '!=', 'cdd'),
+                                    ('cdd_converted_to_cdi', '=', True)]}"/>
+                    </group>
+
+                    <!-- ===== NOTES ===== -->
+                    <group col="1" string="Notes">
+                        <field name="contract_notes" nolabel="1"
+                               placeholder="Notes additionnelles sur le contrat..."/>
+                    </group>
+
+                    <!-- ===== RAPPELS LÉGAUX CDI ===== -->
+                    <div class="alert alert-info" role="alert"
+                         attrs="{'invisible': [('contract_type_extended', '!=', 'cdi')]}">
+                        <strong><i class="fa fa-info-circle"/> Rappel légal CDI :</strong>
+                        <ul class="mb-0" style="margin-top: 8px;">
+                            <li>Par défaut, tout contrat est CDI sauf exceptions légales.</li>
+                            <li>Période d'essai maximale : <strong>6 mois</strong>, renouvelable une seule fois.</li>
+                            <li>La rupture pendant la période d'essai ne donne pas droit à indemnité.</li>
+                        </ul>
+                    </div>
+
+                    <!-- ===== RAPPELS LÉGAUX CDD ===== -->
+                    <div class="alert alert-warning" role="alert"
+                         attrs="{'invisible': [('contract_type_extended', '!=', 'cdd')]}">
+                        <strong><i class="fa fa-exclamation-triangle"/> Rappel légal CDD :</strong>
+                        <ul class="mb-0" style="margin-top: 8px;">
+                            <li><strong>Cas d'exceptions uniquement :</strong> surcroît temporaire d'activité, 
+                                remplacement provisoire, travaux saisonniers.</li>
+                            <li>Tout CDD non conforme est automatiquement converti en CDI.</li>
+                            <li>Pas de période d'essai pour les CDD.</li>
+                            <li>Si le salarié continue après la fin du CDD, le contrat devient CDI automatiquement.</li>
+                        </ul>
+                    </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================== -->
+    <!-- Vues pour Medical Exam Type                        -->
+    <!-- ================================================== -->
+
+    <!-- Vue Formulaire -->
+    <record id="view_medical_exam_type_form" model="ir.ui.view">
+        <field name="name">medical.exam.type.form</field>
+        <field name="model">medical.exam.type</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
+                        </button>
+                        <button name="action_open_medical_exam_wizard" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                            string="Nouvelle fiche d'amplitude"/>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Type d'examen"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Information générale">
+                            <field name="code" placeholder="e.g., PER, REP, AVR"/>
+                            <field name="validity_days" placeholder="Nombre de jours"/>
+                        </group>
+                    </group>
+                    <group string="Description">
+                        <field name="description" placeholder="Description détaillée du type d'examen" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Liste -->
+    <record id="view_medical_exam_type_tree" model="ir.ui.view">
+        <field name="name">medical.exam.type.tree</field>
+        <field name="model">medical.exam.type</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="validity_days"/>
+                <field name="active" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue Recherche -->
+    <record id="view_medical_exam_type_search" model="ir.ui.view">
+        <field name="name">medical.exam.type.search</field>
+        <field name="model">medical.exam.type</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <separator/>
+                <filter string="Actif" name="filter_active"
+                        domain="[('active', '=', True)]"/>
+                <filter string="Non actif" name="filter_inactive"
+                        domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_medical_exam_type" model="ir.actions.act_window">
+        <field name="name">Configuration des statuts</field>
+        <field name="res_model">medical.exam.type</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouveau statut de fiche d'amplitude
+            </p>
+            <p>
+                Définissez les statuts (Périodique, Reprise, Avant Reprise, Spontanée, Embauche),
+                leurs codes et leur durée.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu principal fiche amplitude -->
+    <menuitem id="menu_fiche_amplitude_root"
+              name="Fiche d'amplitude"
+              parent="hr.menu_hr_root"
+              sequence="84"/>
+
+    <!-- Menu configuration statuts -->
+    <menuitem id="menu_fiche_amplitude_config_status"
+              name="Configuration des statuts"
+              parent="employee_extended.menu_fiche_amplitude_root"
+              action="action_medical_exam_type"
+              sequence="20"/>
+
+</odoo>

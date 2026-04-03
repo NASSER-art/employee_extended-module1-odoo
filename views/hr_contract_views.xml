@@ -6,13 +6,26 @@
         <field name="model">hr.contract</field>
         <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
         <field name="arch" type="xml">
+            <!-- Rendre invisible le champ de type de contrat d'Odoo pour tout le monde -->
+            <xpath expr="//field[@name='contract_type_id'][1]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='contract_type_id'][2]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
             <xpath expr="//notebook" position="inside">
-                <page string="Détails Tunisie" name="tunisia_details">
+                <page string="Détails" name="tunisia_details">
                     <group>
                         <group string="Type de contrat">
                             <field name="contract_type_extended"/>
                             <field name="cdd_reason" attrs="{'invisible': [('contract_type_extended', '!=', 'cdd')], 'required': [('contract_type_extended', '=', 'cdd')]}"/>
                         </group>
+                       <group string="Dates du contrat">
+                       <field name="date_end"
+                         attrs="{'invisible': [('contract_type_extended','=','cdi')],
+                        'required': [('contract_type_extended','in',['cdd','sivp','karma'])]}"/>
+                      </group>
+
                         <group string="Période d'essai (CDI)" attrs="{'invisible': [('contract_type_extended', '!=', 'cdi')]}">
                             <field name="is_trial_period"/>
                             <field name="trial_date_start" attrs="{'invisible': [('is_trial_period', '=', False)]}"/>
@@ -22,14 +35,24 @@
                             <button name="action_renew_trial" string="Renouveler l'essai" type="object" class="btn-primary" attrs="{'invisible': ['|', '|', ('is_trial_period', '=', False), ('trial_renewed', '=', True), ('state', '!=', 'open')]}"/>
                         </group>
                     </group>
+                    
+                    <!-- Action de conversion CDD -->
+                    <group col="1" attrs="{'invisible': [('contract_type_extended', '!=', 'cdd')]}">
+                        <button name="action_convert_cdd_to_cdi"
+                                string="Convertir en CDI"
+                                type="object"
+                                class="btn-primary"
+                                confirm="Êtes-vous sûr de vouloir convertir ce CDD en CDI ?"
+                                groups="hr.group_hr_manager"
+                                attrs="{'invisible': [('cdd_converted_to_cdi', '=', True)]}"/>
+                    </group>
+                    
+                    <!-- Affichage de la conversion effectuée -->
                     <group string="Conversion CDD" attrs="{'invisible': [('cdd_converted_to_cdi', '=', False)]}">
                         <group>
                             <field name="cdd_converted_to_cdi" readonly="1"/>
                             <field name="cdd_conversion_date" readonly="1"/>
                             <field name="cdd_conversion_reason" readonly="1"/>
-                        </group>
-                        <group>
-                             <button name="action_convert_cdd_to_cdi" string="Convertir en CDI" type="object" class="btn-primary" attrs="{'invisible': ['|', ('contract_type_extended', '!=', 'cdd'), ('state', '!=', 'open')]}"/>
                         </group>
                     </group>
                     <group string="Notes">
@@ -49,6 +72,55 @@
             <xpath expr="//field[@name='date_start']" position="before">
                 <field name="contract_type_extended" optional="show"/>
             </xpath>
+        </field>
+    </record>
+
+    <!-- Search View for Contract with Type Filters - Complete Override -->
+    <record id="hr_contract_view_search_extended" model="ir.ui.view">
+        <field name="name">hr.contract.search.extended</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_search"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <!-- Add contract_type_extended as searchable field -->
+            <xpath expr="//field[@name='employee_id']" position="after">
+                <field name="contract_type_extended"
+                       string="Type de contrat"/>
+            </xpath>
+            
+            <!-- Add new filters inside search -->
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter string="CDI" name="filter_cdi"
+                        domain="[('contract_type_extended', '=', 'cdi')]"/>
+                <filter string="CDD" name="filter_cdd"
+                        domain="[('contract_type_extended', '=', 'cdd')]"/>
+                <filter string="SIVP" name="filter_sivp"
+                        domain="[('contract_type_extended', '=', 'sivp')]"/>
+                <filter string="Karma" name="filter_karma"
+                        domain="[('contract_type_extended', '=', 'karma')]"/>
+                <separator/>
+                <filter string="CDD converti en CDI" name="filter_cdd_converted"
+                        domain="[('cdd_converted_to_cdi', '=', True)]"/>
+                <filter string="En période d'essai" name="filter_trial_period"
+                        domain="[('is_trial_period', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================================== -->
+    <!-- OVERRIDE: Hériter de la search view Employee pour modifier le filtre  -->
+    <!-- "Contract Warning" et le renommer en "Contract Ending Soon"           -->
+    <!-- ===================================================================== -->
+    <record id="hr_employee_view_search_contract_warning" model="ir.ui.view">
+        <field name="name">hr.employee.search.contract.warning</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr_contract.hr_employee_view_search"/>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='with_contract_warning']" position="attributes">
+                <attribute name="string">Contract Ending Soon</attribute>
+          = un système de routage pour naviguer et modifier du XML !  </xpath>
         </field>
     </record>
 </odoo>

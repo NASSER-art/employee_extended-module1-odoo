@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================== -->
+    <!-- Page Éducation - Fiche Employé                     -->
+    <!-- ================================================== -->
+    <record id="view_employee_form_education" model="ir.ui.view">
+        <field name="name">hr.employee.form.education</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="employee_extended.view_employee_form_extended"/>
+        <field name="priority">55</field>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='page_education']" position="inside">
+                <group>
+                    <group string="Formation et diplômes" col="2">
+                            <field name="education_level"
+                                   placeholder="Sélectionner le niveau"/>
+                            <field name="education_speciality"
+                                   placeholder="Ex: Informatique, Mécanique..."/>
+                            <field name="education_institution"
+                                   placeholder="Nom de l'établissement"/>
+                            <field name="education_year"
+                                   placeholder="Ex: 2020"/>
+                        </group>
+                    </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

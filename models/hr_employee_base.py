@@ -6,51 +6,6 @@ class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
     # =============================================
-    # Départements
-    # =============================================
-    assignment_department_id = fields.Many2one(
-        'hr.department',
-        string="Département d'affectation",
-        tracking=True,
-        domain="[('parent_id', '=', False)]",
-        help="Département de rattachement principal (Niveau 1)",
-    )
-
-    # Note: department_id est hérité de hr.employee
-
-    sub_department_id = fields.Many2one(
-        'hr.department',
-        string="Sous-département",
-        tracking=True,
-        domain="[('parent_id', '=', department_id)]",
-        help="Sous-département de l'employé (Niveau 3)",
-    )
-
-    @api.onchange('assignment_department_id')
-    def _onchange_assignment_department(self):
-        if self.assignment_department_id:
-            # Si le département actuel n'est pas un enfant de l'affectation, on le vide
-            if self.department_id and self.department_id.parent_id != self.assignment_department_id:
-                self.department_id = False
-                self.sub_department_id = False
-        else:
-            self.department_id = False
-            self.sub_department_id = False
-
-    @api.onchange('department_id')
-    def _onchange_department_id(self):
-        if self.department_id:
-            # Si le sous-département actuel n'est pas un enfant du département, on le vide
-            if self.sub_department_id and self.sub_department_id.parent_id != self.department_id:
-                self.sub_department_id = False
-            
-            # Auto-remplir le département d'affectation si vide
-            if not self.assignment_department_id and self.department_id.parent_id:
-                self.assignment_department_id = self.department_id.parent_id
-        else:
-            self.sub_department_id = False
-
-    # =============================================
     # Niveau d'éducation
     # =============================================
     education_level = fields.Selection([
